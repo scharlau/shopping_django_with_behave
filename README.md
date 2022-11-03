@@ -45,7 +45,7 @@ The current unit and integration tests run fast, and confirm that the individual
 
 ## Behave added for BDD
 This adds driver directory, and features, with steps directory.
-We can now add the testing library Behave, along with Selenium for and the appropriate web drivers for your system, which you can find at https://selenium-python.readthedocs.io/installation.html#drivers Then put the binary at driver/chromedriver in your app, as you see in the repo. 
+We can now add the testing library Behave, along with Selenium for and the appropriate web drivers for your system, which you can find at https://selenium-python.readthedocs.io/installation.html#drivers Then put the binary at driver/chromedriver, gecko, or other driver in your app, as you see in the repo. Add it to the 'driver' folder mentione further below.
 
 You might want to look at the documentation for Behave https://behave.readthedocs.io/en/latest/ for more about how to use it.
 You should look at Selenium documentation for [navigating web pages] (https://www.selenium.dev/selenium/docs/api/py/webdriver_remote/selenium.webdriver.remote.webdriver.html#module-selenium.webdriver.remote.webdriver)
@@ -61,10 +61,98 @@ As this is for learning purposes, you can ignore the deprecation warning that mi
 ### Behave integration details
 If you're using Behave with Django, then you need to edit the following folders and files. These need to be added in the root folder of your application. They should sit at the same level as 'shopping' and 'shop':
 
-1. Create the 'features' directory to hold your <model>.feature files, 
-2. Create a 'steps' directory inside of the 'features' folder, which hold the <model>.py files to implement each item in the feature. 
+1. Create the 'features' directory to hold your <model>.feature files. To start with add a blank product.feature file.
+2. Create a 'steps' directory inside of the 'features' folder, which hold the <model>.py files to implement each item in the feature. To start with add a blank product.py file to hold the steps.
 3. Create a 'driver' folder to hold the browser driver files, which you intend to use such as Chrome.
-4. Inside 'features' should also be an environment.py file, that sets out the relevant options you're using for browser driver such as Chrome, and the before_all(), before_scenario() and such testsuite details. Here we are making use of Django's built in testing framework. This should also hold relevant @fixture methods to load the test database, and set up the testing web server for you too. This runs at a different port from the normal server. 
+4. Inside 'features' should also be an environment.py file. We'll add to this shortly.
+
+We now have the basics for using behave, and can start filling in the details. We'll start with the product.feature file. Add this code, which you'll see uses the given, when, then syntax:
+
+        Feature: checking products
+
+        Scenario: add a product
+            Given we want to add a product
+            When we fill in the form
+            Then it succeeds
+        
+        Scenario: adding products
+            Given we have specific products to add
+            | name          | price  |
+            | this one      | 23.45  |
+            | another thing | 34.56  |
+            When we visit the listing page
+            Then we will find 'another thing'
+
+We can now have behave generate the skeleton code to inmplemnt this by running the command:
+
+        behave
+    
+This will run your tests, which of course fail, as we've not implemented any steps yet. You'll see a mix of coloured output for your tests. The yellow ones, as it says, are placeholder code to implement each step. Copy the yellow code to your feature/steps/product.py file.
+
+We can now back up and configure the features/environment.py file. This sets out the way the tests are run and other important details. Add this code to the file:
+
+        from behave import fixture, use_fixture
+        import os, urllib
+        import django
+        from django.shortcuts import resolve_url
+        from django.test import selenium
+        from django.test.testcases import TestCase
+        from django.test.runner import DiscoverRunner
+        from django.test.testcases import LiveServerTestCase
+        # from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+        from selenium import webdriver
+        from selenium.webdriver.chrome.options import Options
+
+        os.environ["DJANGO_SETTINGS_MODULE"] = "shopping.settings"
+        django.setup()
+
+        # Use the chrome driver specific to your version of Chrome browser and put it in ./driver directory
+        # CHROME_DRIVER = os.path.join(os.path.join(os.path.dirname(__file__), 'driver'), 'chromedriver')
+        CHROME_DRIVER = os.path.join('driver/chromedriver')
+        chrome_options = Options()
+        # comment out the line below if you want to see the browser launch for tests
+        # possibly add time.sleep() if required
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument('--no-proxy-server')
+        chrome_options.add_argument("--proxy-server='direct://'")
+        chrome_options.add_argument("--proxy-bypass-list=*")
+
+        def before_all(context):
+            use_fixture(django_test_runner, context)
+            context.browser = webdriver.Chrome(options=chrome_options, executable_path=CHROME_DRIVER)
+            context.browser.set_page_load_timeout(time_to_wait=200)
+
+        def before_scenario(context, scenario):
+            context.test = TestCase()
+            context.test.setUpClass()
+            use_fixture(django_test_case, context)
+
+        def after_scenario(context, scenario):
+            context.test.tearDownClass()
+            del context.test
+
+        def after_all(context):
+            context.browser.quit()
+
+        @fixture
+        def django_test_runner(context):
+            context.test_runner = DiscoverRunner()
+            context.test_runner.setup_test_environment()
+            context.old_db_config = context.test_runner.setup_databases()
+            yield
+            context.test_runner.teardown_databases(context.old_db_config)
+            context.test_runner.teardown_test_environment()
+
+        @fixture
+        def django_test_case(context):
+            context.test_case = LiveServerTestCase
+            context.test_case.setUpClass()
+            yield
+            context.test_case.tearDownClass()
+            del context.test_case
+
+
+that sets out the relevant options you're using for browser driver such as Chrome, and the before_all(), before_scenario() and such testsuite details. Here we are making use of Django's built in testing framework. This should also hold relevant @fixture methods to load the test database, and set up the testing web server for you too. This runs at a different port from the normal server. 
 Your <model>.py step files will need to point to your test server. You can grab the base_url with some lines like this:
 
         import urllib
