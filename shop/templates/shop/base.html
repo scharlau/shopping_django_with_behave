@@ -1,0 +1,31 @@
+{% load static %}
+<html>
+<head>
+  <title>Acme Shopping </title>
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+  {% if user.is_staff %}
+  <p>
+  <a href = "{% url 'shop:product_list' %}">Acme Shopping Home</a>
+  <a href = "{% url 'shop:dashboard' %}">Dashboard</a> |
+  <a href = "{% url 'shop:basket_detail' %}">Basket</a>
+  <a href = "{% url 'shop:customer_list' %}">Customers</a> | 
+  <a href = "{% url 'shop:order_list' %}">Orders</a> |
+  {% else %}
+<p> 
+    <a href = "{% url 'shop:product_list' %}">Acme Shopping Home</a> |
+    <a href = "{% url 'shop:basket_detail' %}">Basket</a>
+    {% endif %}
+    {% if user.is_authenticated %}
+    <a href = "{% url 'shop:logout' %}">Log Out</a> </p>
+    {% else %}
+    <a href = "{% url 'shop:login' %}">Log In</a> 
+    </p>
+    {% endif %}
+
+    {% block content %}
+    {% endblock %}
+
+</body>
+</html>
