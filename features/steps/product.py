@@ -1,6 +1,6 @@
 import urllib
 from urllib.parse import urljoin
-from behave import *
+from behave import given, when, then
 
 @given( "we want to add a product")
 def user_on_product_newpage(context):
@@ -12,6 +12,7 @@ def user_on_product_newpage(context):
 @when( "we fill in the form")
 def user_fills_in_the_form(context):
     # use print(context.browser.page_source) to aid debugging
+    # only prints page source if there is an error in the step
     print(context.browser.page_source)
     name_textfield = context.browser.find_element('name', 'name')
     name_textfield.send_keys('thing one')

@@ -124,8 +124,10 @@ We can now back up and configure the features/environment.py file. This sets out
         django.setup()
 
         # Use the chrome driver specific to your version of Chrome browser and put it in ./driver directory
+        # the driver needs to have the full file path, so use one of these options to pass full path to driver
         # CHROME_DRIVER = os.path.join(os.path.join(os.path.dirname(__file__), 'driver'), 'chromedriver')
-        CHROME_DRIVER = os.path.join('driver/chromedriver')
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        CHROME_DRIVER = os.path.join(current_dir, 'driver/chromedriver')
         chrome_options = Options()
         # comment out the line below if you want to see the browser launch for tests
         # possibly add time.sleep() if required
@@ -134,10 +136,12 @@ We can now back up and configure the features/environment.py file. This sets out
         chrome_options.add_argument("--proxy-server='direct://'")
         chrome_options.add_argument("--proxy-bypass-list=*")
 
+        # add our browser to the context object so that it can be used in all steps
         def before_all(context):
             use_fixture(django_test_runner, context)
-            context.browser = webdriver.Chrome(options=chrome_options, executable_path=CHROME_DRIVER)
-            context.browser.set_page_load_timeout(time_to_wait=200)
+            browser = webdriver.Chrome(options=chrome_options, executable_path=CHROME_DRIVER)
+            browser.set_page_load_timeout(time_to_wait=200)
+            context.browser = browser
 
         def before_scenario(context, scenario):
             context.test = TestCase()
@@ -168,8 +172,13 @@ We can now back up and configure the features/environment.py file. This sets out
             context.test_case.tearDownClass()
             del context.test_case
 
+These details set out the relevant options you're using for browser driver such as Chrome, and the before_all(), before_scenario() and such testsuite details. Here we are making use of Django's built in testing framework. This should also hold relevant @fixture methods to load the test database, and set up the testing web server for you too. This runs at a different port from the normal server. 
 
-that sets out the relevant options you're using for browser driver such as Chrome, and the before_all(), before_scenario() and such testsuite details. Here we are making use of Django's built in testing framework. This should also hold relevant @fixture methods to load the test database, and set up the testing web server for you too. This runs at a different port from the normal server. 
+You should now be able to run your tests, and they'll still fail, as we've not done anything to implement the steps.
+If you comment out the line for chrome to run --headless, then the browser should start up too, as another proof that you're on the right track for things.
+
+### Adding in the Steps for the Feature
+
 Your <model>.py step files will need to point to your test server. You can grab the base_url with some lines like this:
 
         import urllib
