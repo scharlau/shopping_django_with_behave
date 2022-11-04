@@ -1,4 +1,4 @@
-from behave import fixture, use_fixture
+from behave import *
 import os, urllib
 import django
 from django.shortcuts import resolve_url
@@ -15,7 +15,8 @@ django.setup()
 
 # Use the chrome driver specific to your version of Chrome browser and put it in ./driver directory
 # CHROME_DRIVER = os.path.join(os.path.join(os.path.dirname(__file__), 'driver'), 'chromedriver')
-CHROME_DRIVER = os.path.join('driver/chromedriver')
+current_dir = os.path.dirname(os.path.realpath(__file__))
+CHROME_DRIVER = os.path.join(current_dir, 'driver/chromedriver')
 chrome_options = Options()
 # comment out the line below if you want to see the browser launch for tests
 # possibly add time.sleep() if required
@@ -26,8 +27,8 @@ chrome_options.add_argument("--proxy-bypass-list=*")
 
 def before_all(context):
     use_fixture(django_test_runner, context)
-    context.browser = webdriver.Chrome(options=chrome_options, executable_path=CHROME_DRIVER)
-    context.browser.set_page_load_timeout(time_to_wait=200)
+    driver = webdriver.Chrome(options=chrome_options, executable_path=CHROME_DRIVER)
+    driver.set_page_load_timeout(time_to_wait=200)
 
 def before_scenario(context, scenario):
     context.test = TestCase()
@@ -39,7 +40,8 @@ def after_scenario(context, scenario):
     del context.test
 
 def after_all(context):
-    context.browser.quit()
+    driver = webdriver.Chrome(options=chrome_options, executable_path=CHROME_DRIVER)
+    driver.quit()
 
 @fixture
 def django_test_runner(context):

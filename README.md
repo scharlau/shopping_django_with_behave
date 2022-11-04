@@ -44,16 +44,33 @@ The current unit and integration tests run fast, and confirm that the individual
 
 
 ## Behave added for BDD
-This adds driver directory, and features, with steps directory.
-We can now add the testing library Behave, along with Selenium for and the appropriate web drivers for your system, which you can find at https://selenium-python.readthedocs.io/installation.html#drivers Then put the binary at driver/chromedriver, gecko, or other driver in your app, as you see in the repo. Add it to the 'driver' folder mentione further below.
+Behave uses a browser to test your application. This makes it different from the tests that Django runs, as you can now potentially automate the testing of different browsers with your application. 
 
-You might want to look at the documentation for Behave https://behave.readthedocs.io/en/latest/ for more about how to use it.
-You should look at Selenium documentation for [navigating web pages] (https://www.selenium.dev/selenium/docs/api/py/webdriver_remote/selenium.webdriver.remote.webdriver.html#module-selenium.webdriver.remote.webdriver)
+You might want to look at the documentation for Behave https://behave.readthedocs.io/en/latest/ for more about how to use it. You should look at Selenium documentation for [navigating web pages] (https://www.selenium.dev/selenium/docs/api/py/webdriver_remote/selenium.webdriver.remote.webdriver.html#module-selenium.webdriver.remote.webdriver)
+
+Getting this put into place is a little tedious the first time, so take your time with the steps below.
+
+### Browser Drivers
+
+As behave makes use of selenium to drive the browser, you need to put the relevant driver library in place on your system.
+at https://selenium-python.readthedocs.io/installation.html#drivers Pick the one you want to start with and download it.
+
+
+
+Then put the binary at driver/chromedriver, gecko, or other driver in your app, as you see in the repo. Add it to the 'driver' folder mentione further below.
+
+#### Mac OS options for Behave
+If you're on a Mac, then you will need to remove the chrome driver from quarantine with the command
+
+        xattr -d com.apple.quarantine <name-of-executable>
+
+as found and detailed at https://stackoverflow.com/questions/60362018/macos-catalinav-10-15-3-error-chromedriver-cannot-be-opened-because-the-de 
 
 ## Install and Configure Behave
 We can add behave with pip:
 
         pip install behave
+        pip install selenium
 
 As this is for learning purposes, you can ignore the deprecation warning that might appear during the install. The current behavious of the install will work around the issue, and do what is required. We can now start to configure our application to work with Behave.
 
