@@ -46,7 +46,7 @@ The current unit and integration tests run fast, and confirm that the individual
 ## Behave added for BDD
 Behave uses a browser to test your application. This makes it different from the tests that Django runs, as you can now potentially automate the testing of different browsers with your application. 
 
-You might want to look at the documentation for Behave https://behave.readthedocs.io/en/latest/ for more about how to use it. You should look at Selenium documentation for [navigating web pages] (https://www.selenium.dev/selenium/docs/api/py/webdriver_remote/selenium.webdriver.remote.webdriver.html#module-selenium.webdriver.remote.webdriver)
+You might want to look at the documentation for Behave https://behave.readthedocs.io/en/latest/ for more about how to use it. You should look at Selenium documentation General Selenium API: https://www.selenium.dev/selenium/docs/api/py/index.html and for [navigating web pages] (https://www.selenium.dev/selenium/docs/api/py/webdriver_remote/selenium.webdriver.remote.webdriver.html#module-selenium.webdriver.remote.webdriver)
 
 Getting this put into place is a little tedious the first time, so take your time with the steps below.
 
@@ -55,9 +55,7 @@ Getting this put into place is a little tedious the first time, so take your tim
 As behave makes use of selenium to drive the browser, you need to put the relevant driver library in place on your system.
 at https://selenium-python.readthedocs.io/installation.html#drivers Pick the one you want to start with and download it.
 
-
-
-Then put the binary at driver/chromedriver, gecko, or other driver in your app, as you see in the repo. Add it to the 'driver' folder mentione further below.
+Then put the binary at repo_root/features/driver/chromedriver, gecko, or other driver in your app, as you see in the repo. Add it to the 'driver' folder mentioned further below.
 
 #### Mac OS options for Behave
 If you're on a Mac, then you will need to remove the chrome driver from quarantine with the command
@@ -65,6 +63,20 @@ If you're on a Mac, then you will need to remove the chrome driver from quaranti
         xattr -d com.apple.quarantine <name-of-executable>
 
 as found and detailed at https://stackoverflow.com/questions/60362018/macos-catalinav-10-15-3-error-chromedriver-cannot-be-opened-because-the-de 
+
+#### Codio options for Behave
+If doing this on Codio, then you can have chrome run headless, BUT it will now run in a way to show you the browser opening and going through the steps in the way that you can on your laptop. Codio boxes aren't set up to run that way.
+
+In Codio you can add the chromedriver as follows from the command line before downloading the driver:
+Open a terminal and install the chromium browser with the command:
+
+        sudo apt-get install -y chromium-browser
+
+This will install the browser plus its required libraries. If that still shows missing libraries, then use this command for the rest. Hopefully, they were installed with the browser, but they might not have been.
+
+        sudo apt-get install -y libglib2.0-0 libnss3 libgconf-2-4 libfontconfig1
+
+This should now give you chrome. You now can look over the install log in the terminal to see which version number of the chromedriver that you need to install in the driver folder. However, be warned, this might not work fully in Codio, as it requires more memory and a few other components, which are not available by default in Codio.
 
 ## Install and Configure Behave
 We can add behave with pip:
@@ -74,7 +86,6 @@ We can add behave with pip:
 
 As this is for learning purposes, you can ignore the deprecation warning that might appear during the install. The current behavious of the install will work around the issue, and do what is required. We can now start to configure our application to work with Behave.
 
-
 ### Behave integration details
 If you're using Behave with Django, then you need to edit the following folders and files. These need to be added in the root folder of your application. They should sit at the same level as 'shopping' and 'shop':
 
@@ -83,7 +94,7 @@ If you're using Behave with Django, then you need to edit the following folders 
 3. Create a 'driver' folder to hold the browser driver files, which you intend to use such as Chrome.
 4. Inside 'features' should also be an environment.py file. We'll add to this shortly.
 
-We now have the basics for using behave, and can start filling in the details. We'll start with the product.feature file. Add this code, which you'll see uses the given, when, then syntax:
+We now have the basics for using behave, and can start filling in the details. We'll start with the product.feature file. Add this code, which you'll see uses the given, when, then syntax of the BDD approach:
 
         Feature: checking products
 
@@ -104,9 +115,11 @@ We can now have behave generate the skeleton code to inmplemnt this by running t
 
         behave
     
-This will run your tests, which of course fail, as we've not implemented any steps yet. You'll see a mix of coloured output for your tests. The yellow ones, as it says, are placeholder code to implement each step. Copy the yellow code to your feature/steps/product.py file.
+This will run your tests, which of course fail, as we've not implemented any steps yet. You'll see a mix of coloured output for your tests. The yellow ones, as it says, are placeholder code to implement each step. Copy the yellow code to your feature/steps/product.py file. We'll come back to this shortly after we finish the environmental configurations.
 
-We can now back up and configure the features/environment.py file. This sets out the way the tests are run and other important details. Add this code to the file:
+We can now back up and configure the features/environment.py file. This sets out the way the tests are run and other important details. These details set out the relevant options you're using for browser driver such as Chrome, and the before_all(), before_scenario() and such testsuite details. Here we are making use of Django's built in testing framework. This should also hold relevant @fixture methods to load the test database, and set up the testing web server for you too. This runs at a different port from the normal server. 
+
+Add this code to the file:
 
         from behave import fixture, use_fixture
         import os, urllib
@@ -172,14 +185,13 @@ We can now back up and configure the features/environment.py file. This sets out
             context.test_case.tearDownClass()
             del context.test_case
 
-These details set out the relevant options you're using for browser driver such as Chrome, and the before_all(), before_scenario() and such testsuite details. Here we are making use of Django's built in testing framework. This should also hold relevant @fixture methods to load the test database, and set up the testing web server for you too. This runs at a different port from the normal server. 
 
 You should now be able to run your tests, and they'll still fail, as we've not done anything to implement the steps.
 If you comment out the line for chrome to run --headless, then the browser should start up too, as another proof that you're on the right track for things.
 
 ### Adding in the Steps for the Feature
 
-Your <model>.py step files will need to point to your test server. You can grab the base_url with some lines like this:
+Your <model>.py step files will need to point to your test server. You can start your steps/product.py file like this:
 
         import urllib
         from urllib.parse import urljoin
@@ -192,83 +204,72 @@ Your <model>.py step files will need to point to your test server. You can grab 
            open_url = urljoin(base_url,'/product_new/')
            context.browser.get(open_url)
 
-As you can see we're pushing the limits of chaining methods, but this works without you having to hard code any paths. We print the base_url only to confirm that it's what we expect it to be for debugging, and can be commented out when running smoothly.
+As you can see we're pushing the limits of chaining methods together to get the base_url, but this works without you having to hard code any paths. We print the base_url only to confirm that it's what we expect it to be for debugging, and can be commented out when running smoothly.
 
-The other useful step is to create a fixture table in the feature file, which we access in the step file. For example, we can use this in the product.feature file:
+You should now be able to pass the first test in the feature file. As you can see, the others are not implemented, so are skipped. 
 
-    Scenario: adding products
-        Given we have specific products to add
-        | name          | price  |
-        | this one      | 23.45  |
-        | another thing | 34.56  |
-        When we visit the listing page
-        Then we will find 'another thing'
+We can now move onto the @when step implementation by adding these lines below the lines above in your product.py file with this code to fill in the form:
 
-And then iterate through the items to load them into a form in the step file like this:
+        @when( "we fill in the form")
+        def user_fills_in_the_form(context):
+           # use print(context.browser.page_source) to aid debugging
+           # only prints page source if there is an error in the step
+           print(context.browser.page_source)
+           name_textfield = context.browser.find_element('name', 'name')
+           name_textfield.send_keys('thing one')
+           price_textfield = context.browser.find_element('name','price')
+           price_textfield.send_keys(3)
+           context.browser.find_element('name','submit').click()
 
-    open_url = urljoin(base_url,'/product_new/')
-    for row in context.table:
-        context.browser.get(open_url)
-        name_textfield = context.browser.find_element_by_name('name')
-        name_textfield.send_keys(row['name'])
-        price_textfield = context.browser.find_element_by_name('price')
-        price_textfield.send_keys(row['price'])
-        context.browser.find_element_by_name('submit').click()
-        assert row['name'] in context.browser.page_source
+As you can see we can find each field in the form, and then add content to it, and press the submit button. This lets us test/validate that our forms look as we expect them to look. In the next step implementation in your product.py file we can also test that the form behaves as we expect it to work.
+
+        @then( "it succeeds")
+        def product_added(context):
+           assert 'thing one' in context.browser.page_source
+
+This confirms that the form worked as we test the integration of the components.
+
+We can now go through another given, when, then cycle in the product.py file to test multiple components using the fixture table that we placed in the feature file. And then iterate through the items to load them into a form in the step file like this:
+
+        @given(u'we have specific products to add')
+        def specific_products(context):
+           base_url = urllib.request.url2pathname(context.test_case.live_server_url)
+           open_url = urljoin(base_url,'/product_new/')
+           for row in context.table:
+              context.browser.get(open_url)
+              name_textfield = context.browser.find_element('name', 'name')
+              name_textfield.send_keys(row['name'])
+              price_textfield = context.browser.find_element('name','price')
+              price_textfield.send_keys(row['price'])
+              context.browser.find_element('name','submit').click()
+              assert row['name'] in context.browser.page_source
+        
+        @when(u'we visit the listing page')
+        def step_impl(context):
+           base_url = urllib.request.url2pathname(context.test_case.live_server_url)
+           open_url = urljoin(base_url,'/product_list')
+           context.browser.get(open_url)
+           print(context.browser.page_source)
+           assert 'Product List' in context.browser.page_source
+
+        @then(u'we will find \'another thing\'')
+        def step_impl(context):
+           assert 'another thing' in context.browser.page_source
 
 This will iteratively load and submit each item in the feature file.
 A nice and easy way to test integration, and load data into the database for testing in a scenario.
 
-#### Codio options for Behave
-If doing this on Codio, then you can add the chromedriver as follows from the command line before downloading the driver:
-Open a terminal and install the chromium browser with the command:
-
-        sudo apt-get install -y chromium-browser
-
-This will install the browser plus its required libraries. If that still shows missing libraries, then use this command for the rest. Hopefully, they were installed with the browser, but they might not have been.
-
-        sudo apt-get install -y libglib2.0-0 libnss3 libgconf-2-4 libfontconfig1
-
-This should now give you chrome. You now can look over the install log in the terminal to see which version number of the chromedriver that you need to install in the driver folder. However, be warned, this might not work fully in Codio, as it requires more memory and a few other components, which are not available by default in Codio.
-
-#### Mac OS options for Behave
-If you're on a Mac, then you will need to remove the chrome driver from quarantine with the command
-
-        xattr -d com.apple.quarantine <name-of-executable>
-
-as found and detailed at https://stackoverflow.com/questions/60362018/macos-catalinav-10-15-3-error-chromedriver-cannot-be-opened-because-the-de 
-
-#### Using Behave
-You can run behave with the command 
-
-        behave
-
-Which will launch the tests in the features folder. Configure behave in the environment.py file, and put your given, when, then statement scenarios into feature files. Each of those will map to a file in the 'steps' directory, where you put the implementation details for the test.
-
-
-
-### There is still more to do with this
-This still needs more work. There is currently no way to set up admin users, other than using the admin system to change users to 'staff', who could then see a dashboard of orders, and customers. The current dashboard is a placeholder, which only 'is_staff' can see. You can look at this other repo for ideas of how to add visuals to it https://github.com/scharlau/polar_bears_django_visuals based on what you find interesting.
+## There is still more to do with this
+This still needs more work. We're only testing that we can add a new product, and that is is displayed. We aren't testing the editing, or deleting of products. Nor are we testing the CRUD operations for customers, and orders. You'll also notice that we don't test the authentication system either.
 
 A better version would only allow staff to remove and edit the products too. Ideally, there should be more tests too. It would've made developing these extra parts easier if tests showed where the pages 'broke' as parts were added.
-Oh, and the stuff from faker sometimes adds extra characters. Those need to be cleaned up.
 
 ##  Doing the Work
 Work through the three rounds with a partner, or on your own, depending upon your circumstances. Each round should be twelve minutes, followed by a discussion of where you are and what has been working, as well as, what you're working on next.
 
-You may want to refer to the shop/models.py file to understand the database schema before you get started. Some of you might even want to diagram the schema. 
-
-You might also want to spend a few minutes at the start of each round planning what you might want to do.
-
-You'll see that this version works with the objects in the shop/models.py file to manipulate the data we display on the page. This means we've mostly abstracted away the SQL, and are working with objects for our queries and the dislay of results.
-
-There are some forms here for the products. These add the basic CRUD methods (create, read, update and delete). You could add similar ones for other objects.
-
-
-
 ## The Exercises
 
-1. Round one should be fixing the order_detail.html page to show names of items and customers, who placed the order. If you have time, then you can also fix the customer_details.html page to show the customer's orders, and let them click through to the order_details.html page, which also needs more details added so customers/staff can see items.
-2. Round two should be implementing the 'dashboard' page to show the total value of orders placed by customers.
-3. Round three is adding it so that customers can see their own orders.
+1. Round one should be adding more the edit and delete tests for products. 
+2. Round two should be adding tests so that only authenticated users can create, edit, and delete products.
+3. Round three is doing what else seems interesting.
 
