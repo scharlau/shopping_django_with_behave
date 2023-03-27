@@ -17,7 +17,7 @@ After you clone or download the repository use these commands to set things up:
 
 This app uses Faker to generate customer and product details in the 'shop/management/commands/populate_tables.py' file. Go to https://faker.readthedocs.io/en/stable/providers.html and look through the options for Standard Providers to see if you want to change any details in values used.
 
-You should now be able to populate the tables with the command:
+You should now be able to populate the tables with the command, which might take a bit of time to run, so be patient:
 
         python3 manage.py populate_tables
 
@@ -138,6 +138,7 @@ Add this code to the file:
 
         # Use the chrome driver specific to your version of Chrome browser and put it in ./driver directory
         # the driver needs to have the full file path, so use one of these options to pass full path to driver
+        # swap - uncomment one CHROME_DRIVER line for the other if you get an error about 'context' not found
         # CHROME_DRIVER = os.path.join(os.path.join(os.path.dirname(__file__), 'driver'), 'chromedriver')
         current_dir = os.path.dirname(os.path.realpath(__file__))
         CHROME_DRIVER = os.path.join(current_dir, 'driver/chromedriver')
