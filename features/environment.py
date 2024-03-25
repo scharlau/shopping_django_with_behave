@@ -1,5 +1,5 @@
 from behave import fixture, use_fixture
-import os, urllib
+import os, urllib, subprocess
 import django
 from django.shortcuts import resolve_url
 from django.test import selenium
@@ -9,6 +9,7 @@ from django.test.testcases import LiveServerTestCase
 # from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 
 os.environ["DJANGO_SETTINGS_MODULE"] = "shopping.settings"
 django.setup()
@@ -17,7 +18,7 @@ django.setup()
 # the driver needs to have the full file path, so use one of these options to pass full path to driver
 # CHROME_DRIVER = os.path.join(os.path.join(os.path.dirname(__file__), 'driver'), 'chromedriver')
 current_dir = os.path.dirname(os.path.realpath(__file__))
-CHROME_DRIVER = os.path.join(current_dir, 'driver/chromedriver')
+# CHROME_DRIVER = os.path.join(current_dir, 'driver/chromedriver')
 chrome_options = Options()
 # comment out the line below if you want to see the browser launch for tests
 # possibly add time.sleep() if required
@@ -29,8 +30,13 @@ chrome_options.add_argument("--proxy-bypass-list=*")
 # add our browser to the context object so that it can be used in all steps
 def before_all(context):
     use_fixture(django_test_runner, context)
-    browser = webdriver.Chrome(options=chrome_options, executable_path=CHROME_DRIVER)
-    browser.set_page_load_timeout(time_to_wait=200)
+    # browser = webdriver.Chrome(options=chrome_options, executable_path=CHROME_DRIVER)
+    option = webdriver.ChromeOptions()
+    service = webdriver.ChromeService()
+    service = webdriver.ChromeService(service_args=['--disable-build-check'], log_output=subprocess.STDOUT)
+    browser = webdriver.Chrome(options= option, service=service)
+    # browser.set_page_load_timeout(time_to_wait=200)
+    browser.implicitly_wait(0.5)
     context.browser = browser
 
 def before_scenario(context, scenario):
