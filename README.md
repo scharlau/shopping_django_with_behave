@@ -50,7 +50,14 @@ You might want to look at the documentation for Behave https://behave.readthedoc
 
 Getting this put into place is a little tedious the first time, so take your time with the steps below.
 
+*****************
+NEW UPDATES 25 March 2024
+There are details below which haven't been fully tested, but should work.
+You'll find the version in the 'solution' branch is working
+******************
+
 ### Browser Drivers
+****** You 'might be able to skip this part as Selenium includes browser drivers now by default. ******
 
 As behave makes use of selenium to drive the browser, you need to put the relevant driver library in place on your system.
 at https://selenium-python.readthedocs.io/installation.html#drivers Pick the one you want to start with and download it.
@@ -65,6 +72,7 @@ If you're on a Mac, then you will need to remove the chrome driver from quaranti
 as found and detailed at https://stackoverflow.com/questions/60362018/macos-catalinav-10-15-3-error-chromedriver-cannot-be-opened-because-the-de 
 
 #### Codio options for Behave
+****** possibly skip ********
 If doing this on Codio, then you can have chrome run headless, BUT it will now run in a way to show you the browser opening and going through the steps in the way that you can on your laptop. Codio boxes aren't set up to run that way.
 
 In Codio you can add the chromedriver as follows from the command line before downloading the driver:
@@ -119,10 +127,12 @@ This will run your tests, which of course fail, as we've not implemented any ste
 
 We can now back up and configure the features/environment.py file. This sets out the way the tests are run and other important details. These details set out the relevant options you're using for browser driver such as Chrome, and the before_all(), before_scenario() and such testsuite details. Here we are making use of Django's built in testing framework. This should also hold relevant @fixture methods to load the test database, and set up the testing web server for you too. This runs at a different port from the normal server. 
 
+***** NEW LINES ADDED, others EDITED *******
+
 Add this code to the file:
 
         from behave import fixture, use_fixture
-        import os, urllib
+        import os, urllib, subprocess
         import django
         from django.shortcuts import resolve_url
         from django.test import selenium
@@ -132,6 +142,7 @@ Add this code to the file:
         # from django.contrib.staticfiles.testing import StaticLiveServerTestCase
         from selenium import webdriver
         from selenium.webdriver.chrome.options import Options
+        from selenium.webdriver.chrome.service import Service
 
         os.environ["DJANGO_SETTINGS_MODULE"] = "shopping.settings"
         django.setup()
@@ -141,7 +152,7 @@ Add this code to the file:
         # swap - uncomment one CHROME_DRIVER line for the other if you get an error about 'context' not found
         # CHROME_DRIVER = os.path.join(os.path.join(os.path.dirname(__file__), 'driver'), 'chromedriver')
         current_dir = os.path.dirname(os.path.realpath(__file__))
-        CHROME_DRIVER = os.path.join(current_dir, 'driver/chromedriver')
+         # CHROME_DRIVER = os.path.join(current_dir, 'driver/chromedriver')
         chrome_options = Options()
         # comment out the line below if you want to see the browser launch for tests
         # possibly add time.sleep() if required
@@ -153,8 +164,13 @@ Add this code to the file:
         # add our browser to the context object so that it can be used in all steps
         def before_all(context):
             use_fixture(django_test_runner, context)
-            browser = webdriver.Chrome(options=chrome_options, executable_path=CHROME_DRIVER)
-            browser.set_page_load_timeout(time_to_wait=200)
+           #  browser = webdriver.Chrome(options=chrome_options, executable_path=CHROME_DRIVER)
+            option = webdriver.ChromeOptions()
+            service = webdriver.ChromeService()
+            service = webdriver.ChromeService(service_args=['--disable-build-check'], log_output=subprocess.STDOUT)
+            browser = webdriver.Chrome(options= option, service=service)
+            # browser.set_page_load_timeout(time_to_wait=200)
+            browser.implicitly_wait(0.5)
             context.browser = browser
 
         def before_scenario(context, scenario):
